@@ -334,6 +334,7 @@ class _ProtoIterator:
                 y = 0
             proto_dict = {}
             for resolution in self.resolutions[::-1]:
+                print(resolution, getImageSize(resolution, self.base_size))
                 x_res = skimage.transform.resize(
                     x,
                     output_shape=getImageSize(resolution, self.base_size),
