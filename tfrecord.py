@@ -24,6 +24,7 @@ def write(
     multi_resolution=False,
     resolutions=None,
     verbose=1,
+    base_size=None,
 ):
     """Write features and labels to TFRecord files.
 
@@ -74,7 +75,7 @@ def write(
     # This is the object that returns a protocol buffer string of the feature and label
     # on each iteration. It is pickle-able, unlike a generator.
     proto_iterators = [
-        _ProtoIterator(s, multi_resolution=multi_resolution, resolutions=resolutions)
+        _ProtoIterator(s, multi_resolution=multi_resolution, resolutions=resolutions, base_size=base_size)
         for s in shards
     ]
     # Set up positional arguments for the core writer function.
@@ -276,12 +277,13 @@ class _ProtoIterator:
     """
 
     def __init__(
-        self, features_labels, to_ras=True, multi_resolution=False, resolutions=None
+        self, features_labels, to_ras=True, multi_resolution=False, resolutions=None, base_size=None
     ):
         self.features_labels = features_labels
         self.to_ras = to_ras
         self.multi_resolution = multi_resolution
         self.resolutions = resolutions
+        self.base_size = base_size
 
         # Try to "intelligently" deduce if the labels are scalars or not.
         # An alternative here would be to check if these point to existing
@@ -334,7 +336,7 @@ class _ProtoIterator:
             for resolution in self.resolutions[::-1]:
                 x_res = skimage.transform.resize(
                     x,
-                    output_shape=getImageSize(2, resolution),
+                    output_shape=getImageSize(resolution, self.base_size),
                     order=1,  # linear
                     mode="constant",
                     preserve_range=True,

@@ -1,6 +1,7 @@
 """Model definition for ProgressiveGAN.
 """
 
+from email.mime import base
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from ..utils import getImageSize
@@ -19,7 +20,8 @@ def progressivegan(
     d_fmap_base=8192,
     g_fmap_max=256,
     d_fmap_max=256,
-    drange=[0, 255]
+    drange=[0, 255],
+    base_size=None
 ):
     """Instantiate ProgressiveGAN Architecture.
 
@@ -48,6 +50,7 @@ def progressivegan(
         fmap_base=g_fmap_base,
         fmap_max=g_fmap_max,
         drange=drange,
+        base_size=base_size,
     )
 
     generator.summary()
@@ -58,6 +61,7 @@ def progressivegan(
         dimensionality=dimensionality,
         fmap_base=d_fmap_base,
         fmap_max=d_fmap_max, 
+        base_size=base_size,
     )
 
     discriminator.summary()
@@ -74,7 +78,8 @@ class Generator(tf.keras.Model):
         fmap_base=8192,
         fmap_max=256,
         dimensionality=3,
-        drange=[0, 255]
+        drange=[0, 255],
+        base_size=None,
     ):
         super(Generator, self).__init__()
 
@@ -86,30 +91,30 @@ class Generator(tf.keras.Model):
         self.num_channels = num_channels
         self.dimensionality = dimensionality
 
+        self.drange = drange
+        self.start_size = base_size if base_size != None else (2,2,2)
+
         self.Conv = getattr(layers, "Conv{}D".format(self.dimensionality))
         self.ConvTranspose = getattr(
             layers, "Conv{}DTranspose".format(self.dimensionality)
         )
         self.Upsampling = getattr(layers, "UpSampling{}D".format(self.dimensionality))
 
-        self.start_resolution = 2
-        self.current_resolution = 2
+        self.current_resolution_log2 = 2
         self.highest_resolution_block = self._make_generator_block(
-            self._nf(self.current_resolution),
-            name="g_block_{}".format(self.current_resolution),
+            self._nf(self.current_resolution_log2),
+            name="g_block_{}".format(self.current_resolution_log2),
         )
 
         self.resolution_blocks = []
 
-        baseSize = getImageSize(2, 2**self.start_resolution)
         self.base_dense = tf.keras.layers.Dense(
-            units=self._nf(1) * (baseSize[0] * baseSize[1] * baseSize[2])
+            units=self._nf(1) * (self.start_size[0] * self.start_size[1] * self.start_size[2])
         )
         self.HeadConv1 = self.Conv(filters=self.num_channels, kernel_size=1)
         self.HeadConv2 = self.Conv(filters=self.num_channels, kernel_size=1)
 
         self.build([(None, latent_size), (1,)])
-        self.drange = drange
 
     def _pixel_norm(self, epsilon=1e-8):
         """
@@ -146,8 +151,7 @@ class Generator(tf.keras.Model):
         # Latents stage
         x = self._pixel_norm()(latents)
         x = self.base_dense(x)
-        baseSize = getImageSize(2, 2**self.start_resolution)
-        x = layers.Reshape(list(baseSize) + [self._nf(1)])(x)
+        x = layers.Reshape(list(self.start_size) + [self._nf(1)])(x)
 
         return x
 
@@ -188,11 +192,11 @@ class Generator(tf.keras.Model):
 
     def add_resolution(self):
 
-        self.current_resolution += 1
+        self.current_resolution_log2 += 1
         self.resolution_blocks.append(self.highest_resolution_block)
         self.highest_resolution_block = self._make_generator_block(
-            self._nf(self.current_resolution),
-            name="g_block_{}".format(self.current_resolution),
+            self._nf(self.current_resolution_log2),
+            name="g_block_{}".format(self.current_resolution_log2),
         )
 
         self.HeadConv1 = self.Conv(filters=self.num_channels, kernel_size=1)
@@ -242,6 +246,7 @@ class Discriminator(tf.keras.Model):
         fmap_base=8192,
         fmap_max=512,
         dimensionality=3,
+        base_size=None,
     ):
         super(Discriminator, self).__init__()
 
@@ -252,8 +257,9 @@ class Discriminator(tf.keras.Model):
         self.num_channels = num_channels
         self.dimensionality = dimensionality
 
-        self.start_resolution = 2
-        self.current_resolution = 2
+        self.current_resolution_log2 = 2
+
+        self.start_size = tuple([size*2 for size in base_size]) if base_size != None else (4,4,4)
 
         self.Conv = getattr(layers, "Conv{}D".format(self.dimensionality))
         self.AveragePooling = getattr(
@@ -261,28 +267,28 @@ class Discriminator(tf.keras.Model):
         )
 
         self.highest_resolution_block = self._make_discriminator_block(
-            self._nf(self.current_resolution - 1),
-            name="d_block_{}".format(self.current_resolution),
+            self._nf(self.current_resolution_log2 - 1),
+            name="d_block_{}".format(self.current_resolution_log2),
         )
         self.resolution_blocks = []
 
         self.BaseConv = self.Conv(
-            filters=self._nf(self.current_resolution - 1), kernel_size=1, padding="same"
+            filters=self._nf(self.current_resolution_log2 - 1), kernel_size=1, padding="same"
         )
         self.FadeConv = self.Conv(
-            filters=self._nf(self.current_resolution), kernel_size=1, padding="same"
+            filters=self._nf(self.current_resolution_log2), kernel_size=1, padding="same"
         )
         self.HeadDense1 = tf.keras.layers.Dense(units=self._nf(1))
         self.HeadDense2 = tf.keras.layers.Dense(units=1 + self.label_size)
 
         # images_shape = (
         #     (None,)
-        #     + (int(2.0**self.current_resolution),) * self.dimensionality
+        #     + (int(2.0**self.current_resolution_log2),) * self.dimensionality
         #     + (self.num_channels,)
         # )
         images_shape = (
             (None,)
-            + getImageSize(2, 2**self.start_resolution)
+            + self.start_size
             + (self.num_channels,)
         )
         alpha_shape = (1,)
@@ -355,29 +361,29 @@ class Discriminator(tf.keras.Model):
         The new layers are faded in and controlled by the alpha parameter.
         """
 
-        self.current_resolution += 1
+        self.current_resolution_log2 += 1
 
         self.resolution_blocks.append(self.highest_resolution_block)
         self.highest_resolution_block = self._make_discriminator_block(
-            self._nf(self.current_resolution - 1),
-            name="d_block_{}".format(self.current_resolution),
+            self._nf(self.current_resolution_log2 - 1),
+            name="d_block_{}".format(self.current_resolution_log2),
         )
 
         self.BaseConv = self.Conv(
-            filters=self._nf(self.current_resolution - 1), kernel_size=1, padding="same"
+            filters=self._nf(self.current_resolution_log2 - 1), kernel_size=1, padding="same"
         )
         self.FadeConv = self.Conv(
-            filters=self._nf(self.current_resolution), kernel_size=1, padding="same"
+            filters=self._nf(self.current_resolution_log2), kernel_size=1, padding="same"
         )
 
         # images_shape = (
         #     (None,)
-        #     + (int(2.0**self.current_resolution),) * self.dimensionality
+        #     + (int(2.0**self.current_resolution_log2),) * self.dimensionality
         #     + (self.num_channels,)
         # )
         images_shape = (
             (None,)
-            + getImageSize(2, 2**self.current_resolution)
+            + getImageSize(2**self.current_resolution_log2, tuple([size//2 for size in self.start_size]))
             + (self.num_channels,)
         )
         alpha_shape = (1,)
@@ -391,7 +397,6 @@ class Discriminator(tf.keras.Model):
         # To bring to the right number of filters
         x = self.FadeConv(images)
         y = self.highest_resolution_block(x)
-        pdb.set_trace()
         print(images, x, y)
         x = self.discriminator_base(images, y, alpha)
 

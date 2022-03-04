@@ -199,7 +199,9 @@ def get_num_parallel():
         num_parallel_calls = psutil.cpu_count()
     return num_parallel_calls
 
-def getImageSize(startResolution, resolution):
-    baseLod = int(np.log2(startResolution))
-    lod = int(np.log2(resolution))-baseLod
-    return (_BASE_SIZE[0]*(2**lod), _BASE_SIZE[1]*(2**lod), _BASE_SIZE[2]*(2**lod))
+def getImageSize(resolution, base_size = None):
+    if base_size == None:
+        return (resolution,) * 3
+    # 2**1 => [2,2,5], 2**2 => [4,4,10], 2**3 => [8,8,20]
+    lod = int(np.log2(resolution)) - 1
+    return (base_size[0]*(2**lod), base_size[1]*(2**lod), base_size[2]*(2**lod))
