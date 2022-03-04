@@ -7,6 +7,8 @@ from ..utils import getImageSize
 
 from ..volume import adjust_dynamic_range as _adjust_dynamic_range
 
+import pdb
+
 
 def progressivegan(
     latent_size,
@@ -330,7 +332,6 @@ class Discriminator(tf.keras.Model):
         alpha value to determine level of interpolation. The output node gives
         the prediction of fakeness of the input image.
         """
-        print("head", x)
         x = layers.Flatten()(x)
         x = self.HeadDense1(x)
         x = layers.Activation(tf.nn.leaky_relu)(x)
@@ -386,6 +387,7 @@ class Discriminator(tf.keras.Model):
         # To bring to the right number of filters
         x = self.FadeConv(images)
         y = self.highest_resolution_block(x)
+        pdb.set_trace()
         print(images, x, y)
         x = self.discriminator_base(images, y, alpha)
 
