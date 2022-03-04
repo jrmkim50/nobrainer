@@ -13,6 +13,8 @@ from .utils import get_num_parallel
 
 _TFRECORDS_DTYPE = "float32"
 
+# [2,2,5], [4,4,10], [8,8,20], [16,16,40], [32,32,80], [64,64,160]
+_BASE_SIZE = [2,2,5]
 
 def write(
     features_labels,
@@ -147,13 +149,15 @@ def parse_example_fn(volume_shape, scalar_label=False):
         e = tf.io.parse_single_example(serialized=serialized, features=features)
         x = tf.io.decode_raw(e["feature/value"], _TFRECORDS_DTYPE)
         y = tf.io.decode_raw(e["label/value"], _TFRECORDS_DTYPE)
+        xshape = [tf.io.decode_raw(e["feature/shape/dim{}".format(j)], tf.int64) for j in range(3)]
         # TODO: this line does not work. The shape cannot be determined
         # dynamically... for now.
         # xshape = tf.cast(
         #     tf.io.decode_raw(e["feature/shape"], _TFRECORDS_DTYPE), tf.int32)
-        x = tf.reshape(x, shape=volume_shape)
+        print(xshape, volume_shape)
+        x = tf.reshape(x, shape=xshape)
         if not scalar_label:
-            y = tf.reshape(y, shape=volume_shape)
+            y = tf.reshape(y, shape=xshape)
         else:
             y = tf.reshape(y, shape=[1])
         return x, y
@@ -332,10 +336,13 @@ class _ProtoIterator:
             if not self.scalar_label:
                 y = 0
             proto_dict = {}
+            # 128: 7, 64: 6, 32: 5, 16: 4, 8: 3, 4: 2
+            BASE_LOD = int(np.log2(resolution[0]))
             for resolution in self.resolutions[::-1]:
+                lod = int(np.log2(resolution))-BASE_LOD
                 x_res = skimage.transform.resize(
                     x,
-                    output_shape=(resolution, resolution, resolution),
+                    output_shape=(_BASE_SIZE[0]*(2**lod), _BASE_SIZE[1]*(2**lod), _BASE_SIZE[2]*(2**lod)),
                     order=1,  # linear
                     mode="constant",
                     preserve_range=True,
