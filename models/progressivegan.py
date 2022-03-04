@@ -146,7 +146,7 @@ class Generator(tf.keras.Model):
         x = self._pixel_norm()(latents)
         x = self.base_dense(x)
         baseSize = getImageSize(2, 2)
-        x = layers.Reshape(baseSize + [self._nf(1)])(x)
+        x = layers.Reshape(list(baseSize) + [self._nf(1)])(x)
 
         return x
 
