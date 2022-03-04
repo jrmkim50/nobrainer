@@ -340,6 +340,7 @@ class _ProtoIterator:
                     preserve_range=True,
                     anti_aliasing=True,
                 )
+                print("Resizing", resolution, x_res.shape)
                 # TODO: Affine should be adjusted when resizing
                 proto = _to_proto(
                     feature=x_res, label=y, feature_affine=affine_x, label_affine=None
