@@ -330,6 +330,7 @@ class Discriminator(tf.keras.Model):
         alpha value to determine level of interpolation. The output node gives
         the prediction of fakeness of the input image.
         """
+        print("head", x)
         x = layers.Flatten()(x)
         x = self.HeadDense1(x)
         x = layers.Activation(tf.nn.leaky_relu)(x)
@@ -389,8 +390,6 @@ class Discriminator(tf.keras.Model):
         x = self.discriminator_base(images, y, alpha)
 
         for d_block in self.resolution_blocks[::-1]:
-            print(x, d_block)
             x = d_block(x)
-        print(x)
 
         return self.discriminator_head(x)
