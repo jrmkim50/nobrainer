@@ -337,7 +337,7 @@ class _ProtoIterator:
                 y = 0
             proto_dict = {}
             # 128: 7, 64: 6, 32: 5, 16: 4, 8: 3, 4: 2
-            BASE_LOD = int(np.log2(resolutions[0]))
+            BASE_LOD = int(np.log2(self.resolutions[0]))
             for resolution in self.resolutions[::-1]:
                 lod = int(np.log2(resolution))-BASE_LOD
                 x_res = skimage.transform.resize(
