@@ -100,8 +100,9 @@ class Generator(tf.keras.Model):
 
         self.resolution_blocks = []
 
+        baseSize = getImageSize(2, 2)
         self.base_dense = tf.keras.layers.Dense(
-            units=self._nf(1) * (2**self.dimensionality)
+            units=self._nf(1) * (baseSize[0] * baseSize[1] * baseSize[2])
         )
         self.HeadConv1 = self.Conv(filters=self.num_channels, kernel_size=1)
         self.HeadConv2 = self.Conv(filters=self.num_channels, kernel_size=1)
@@ -144,7 +145,8 @@ class Generator(tf.keras.Model):
         # Latents stage
         x = self._pixel_norm()(latents)
         x = self.base_dense(x)
-        x = layers.Reshape([2] * self.dimensionality + [self._nf(1)])(x)
+        baseSize = getImageSize(2, 2)
+        x = layers.Reshape(baseSize + [self._nf(1)])(x)
 
         return x
 
@@ -268,7 +270,8 @@ class Discriminator(tf.keras.Model):
         self.FadeConv = self.Conv(
             filters=self._nf(self.current_resolution), kernel_size=1, padding="same"
         )
-        self.HeadDense1 = tf.keras.layers.Dense(units=self._nf(1))
+        baseSize = getImageSize(2, 2)
+        self.HeadDense1 = tf.keras.layers.Dense(units=self._nf(1)*(baseSize[0] * baseSize[1] * baseSize[2]))
         self.HeadDense2 = tf.keras.layers.Dense(units=1 + self.label_size)
 
         # images_shape = (
