@@ -278,6 +278,7 @@ class Discriminator(tf.keras.Model):
             + (self.num_channels,)
         )
         alpha_shape = (1,)
+        print(images_shape, alpha_shape)
 
         self.build([images_shape, alpha_shape])
 
