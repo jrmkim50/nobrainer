@@ -393,7 +393,6 @@ class Discriminator(tf.keras.Model):
         # To bring to the right number of filters
         x = self.FadeConv(images)
         y = self.highest_resolution_block(x)
-        print(images, x, y)
         x = self.discriminator_base(images, y, alpha)
 
         for d_block in self.resolution_blocks[::-1]:
