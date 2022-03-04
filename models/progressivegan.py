@@ -390,5 +390,5 @@ class Discriminator(tf.keras.Model):
 
         for d_block in self.resolution_blocks[::-1]:
             x = d_block(x)
-
+        print(x)
         return self.discriminator_head(x)
