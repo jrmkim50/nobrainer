@@ -11,6 +11,8 @@ import tensorflow as tf
 
 _cache_dir = os.path.join(tempfile.gettempdir(), "nobrainer-data")
 
+# [2,2,5], [4,4,10], [8,8,20], [16,16,40], [32,32,80], [64,64,160]
+_BASE_SIZE = [2,2,5]
 
 def get_data(cache_dir=_cache_dir):
     """Download sample features and labels. The features are T1-weighted MGZ
@@ -196,3 +198,8 @@ def get_num_parallel():
     except AttributeError:
         num_parallel_calls = psutil.cpu_count()
     return num_parallel_calls
+
+def getImageSize(startResolution, resolution):
+    baseLod = int(np.log2(startResolution))
+    lod = int(np.log2(resolution))-baseLod
+    return (_BASE_SIZE[0]*(2**lod), _BASE_SIZE[1]*(2**lod), _BASE_SIZE[2]*(2**lod))

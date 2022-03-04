@@ -3,6 +3,7 @@
 
 import tensorflow as tf
 from tensorflow.keras import layers, models
+from utils import getImageSize
 
 from ..volume import adjust_dynamic_range as _adjust_dynamic_range
 
@@ -266,9 +267,14 @@ class Discriminator(tf.keras.Model):
         self.HeadDense1 = tf.keras.layers.Dense(units=self._nf(1))
         self.HeadDense2 = tf.keras.layers.Dense(units=1 + self.label_size)
 
+        # images_shape = (
+        #     (None,)
+        #     + (int(2.0**self.current_resolution),) * self.dimensionality
+        #     + (self.num_channels,)
+        # )
         images_shape = (
             (None,)
-            + (int(2.0**self.current_resolution),) * self.dimensionality
+            + getImageSize(2, self.current_resolution)
             + (self.num_channels,)
         )
         alpha_shape = (1,)
@@ -356,9 +362,14 @@ class Discriminator(tf.keras.Model):
             filters=self._nf(self.current_resolution), kernel_size=1, padding="same"
         )
 
+        # images_shape = (
+        #     (None,)
+        #     + (int(2.0**self.current_resolution),) * self.dimensionality
+        #     + (self.num_channels,)
+        # )
         images_shape = (
             (None,)
-            + (int(2.0**self.current_resolution),) * self.dimensionality
+            + getImageSize(2, self.current_resolution)
             + (self.num_channels,)
         )
         alpha_shape = (1,)

@@ -9,12 +9,9 @@ import skimage.transform
 import tensorflow as tf
 
 from .io import read_volume
-from .utils import get_num_parallel
+from .utils import get_num_parallel, getImageSize
 
 _TFRECORDS_DTYPE = "float32"
-
-# [2,2,5], [4,4,10], [8,8,20], [16,16,40], [32,32,80], [64,64,160]
-_BASE_SIZE = [2,2,5]
 
 def write(
     features_labels,
@@ -334,13 +331,10 @@ class _ProtoIterator:
             if not self.scalar_label:
                 y = 0
             proto_dict = {}
-            # 128: 7, 64: 6, 32: 5, 16: 4, 8: 3, 4: 2
-            BASE_LOD = int(np.log2(self.resolutions[0]))
             for resolution in self.resolutions[::-1]:
-                lod = int(np.log2(resolution))-BASE_LOD
                 x_res = skimage.transform.resize(
                     x,
-                    output_shape=(_BASE_SIZE[0]*(2**lod), _BASE_SIZE[1]*(2**lod), _BASE_SIZE[2]*(2**lod)),
+                    output_shape=getImageSize(2, resolution),
                     order=1,  # linear
                     mode="constant",
                     preserve_range=True,
