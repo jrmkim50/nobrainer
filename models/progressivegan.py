@@ -55,8 +55,7 @@ def progressivegan(
         num_channels=num_channels,
         dimensionality=dimensionality,
         fmap_base=d_fmap_base,
-        fmap_max=d_fmap_max,
-        drange=drange,
+        fmap_max=d_fmap_max, 
     )
 
     discriminator.summary()
@@ -238,7 +237,6 @@ class Discriminator(tf.keras.Model):
         fmap_base=8192,
         fmap_max=512,
         dimensionality=3,
-        drange=[0, 255],
     ):
         super(Discriminator, self).__init__()
 
@@ -302,7 +300,7 @@ class Discriminator(tf.keras.Model):
 
     def discriminator_base(self, x, y, alpha):
 
-        x = self.AveragePooling()(x)
+        x = self.AveragePooling(padding="same")(x)
         x = self.BaseConv(x)
 
         lerp_input = self._weighted_sum()([x, y, alpha])
