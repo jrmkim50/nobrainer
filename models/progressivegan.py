@@ -53,8 +53,6 @@ def progressivegan(
         base_size=base_size,
     )
 
-    generator.summary()
-
     discriminator = Discriminator(
         label_size=label_size,
         num_channels=num_channels,
@@ -63,8 +61,6 @@ def progressivegan(
         fmap_max=d_fmap_max, 
         base_size=base_size,
     )
-
-    discriminator.summary()
 
     return generator, discriminator
 
