@@ -92,6 +92,7 @@ class Generator(tf.keras.Model):
         )
         self.Upsampling = getattr(layers, "UpSampling{}D".format(self.dimensionality))
 
+        self.start_resolution = 2
         self.current_resolution = 2
         self.highest_resolution_block = self._make_generator_block(
             self._nf(self.current_resolution),
@@ -100,7 +101,7 @@ class Generator(tf.keras.Model):
 
         self.resolution_blocks = []
 
-        baseSize = getImageSize(2, 2)
+        baseSize = getImageSize(2, 2**self.start_resolution)
         self.base_dense = tf.keras.layers.Dense(
             units=self._nf(1) * (baseSize[0] * baseSize[1] * baseSize[2])
         )
@@ -145,7 +146,7 @@ class Generator(tf.keras.Model):
         # Latents stage
         x = self._pixel_norm()(latents)
         x = self.base_dense(x)
-        baseSize = getImageSize(2, 2)
+        baseSize = getImageSize(2, 2**self.start_resolution)
         x = layers.Reshape(list(baseSize) + [self._nf(1)])(x)
 
         return x
@@ -251,6 +252,7 @@ class Discriminator(tf.keras.Model):
         self.num_channels = num_channels
         self.dimensionality = dimensionality
 
+        self.start_resolution = 2
         self.current_resolution = 2
 
         self.Conv = getattr(layers, "Conv{}D".format(self.dimensionality))
@@ -270,8 +272,7 @@ class Discriminator(tf.keras.Model):
         self.FadeConv = self.Conv(
             filters=self._nf(self.current_resolution), kernel_size=1, padding="same"
         )
-        baseSize = getImageSize(2, 2)
-        self.HeadDense1 = tf.keras.layers.Dense(units=self._nf(1)*(baseSize[0] * baseSize[1] * baseSize[2]))
+        self.HeadDense1 = tf.keras.layers.Dense(units=self._nf(1))
         self.HeadDense2 = tf.keras.layers.Dense(units=1 + self.label_size)
 
         # images_shape = (
@@ -281,7 +282,7 @@ class Discriminator(tf.keras.Model):
         # )
         images_shape = (
             (None,)
-            + getImageSize(2, self.current_resolution)
+            + getImageSize(2, 2**self.start_resolution)
             + (self.num_channels,)
         )
         alpha_shape = (1,)
@@ -376,7 +377,7 @@ class Discriminator(tf.keras.Model):
         # )
         images_shape = (
             (None,)
-            + getImageSize(2, self.current_resolution)
+            + getImageSize(2, 2**self.current_resolution)
             + (self.num_channels,)
         )
         alpha_shape = (1,)
