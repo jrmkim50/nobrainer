@@ -3,7 +3,7 @@
 
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from utils import getImageSize
+from .utils import getImageSize
 
 from ..volume import adjust_dynamic_range as _adjust_dynamic_range
 
