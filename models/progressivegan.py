@@ -233,7 +233,7 @@ class Discriminator(tf.keras.Model):
         fmap_base=8192,
         fmap_max=512,
         dimensionality=3,
-        drange=[0, 255]
+        drange=[0, 255],
     ):
         super(Discriminator, self).__init__()
 

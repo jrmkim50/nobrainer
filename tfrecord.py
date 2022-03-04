@@ -149,15 +149,13 @@ def parse_example_fn(volume_shape, scalar_label=False):
         e = tf.io.parse_single_example(serialized=serialized, features=features)
         x = tf.io.decode_raw(e["feature/value"], _TFRECORDS_DTYPE)
         y = tf.io.decode_raw(e["label/value"], _TFRECORDS_DTYPE)
-        xshape = [tf.io.decode_raw(e["feature/shape/dim{}".format(j)], tf.int64) for j in range(3)]
         # TODO: this line does not work. The shape cannot be determined
         # dynamically... for now.
         # xshape = tf.cast(
         #     tf.io.decode_raw(e["feature/shape"], _TFRECORDS_DTYPE), tf.int32)
-        print(xshape, volume_shape)
-        x = tf.reshape(x, shape=xshape)
+        x = tf.reshape(x, shape=volume_shape)
         if not scalar_label:
-            y = tf.reshape(y, shape=xshape)
+            y = tf.reshape(y, shape=volume_shape)
         else:
             y = tf.reshape(y, shape=[1])
         return x, y
