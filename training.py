@@ -33,7 +33,7 @@ class ProgressiveGANTrainer(tf.keras.Model):
     [https://research.nvidia.com/sites/default/files/pubs/2017-10_Progressive-Growing-of/karras2018iclr-paper.pdf](https://research.nvidia.com/sites/default/files/pubs/2017-10_Progressive-Growing-of/karras2018iclr-paper.pdf)
     """
 
-    def __init__(self, discriminator, generator, gradient_penalty=False):
+    def __init__(self, discriminator, generator, gradient_penalty=False, drange=[0, 255]):
         super(ProgressiveGANTrainer, self).__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -44,6 +44,7 @@ class ProgressiveGANTrainer(tf.keras.Model):
             0.0
         )  # For calculating alpha in transition phase
         self.phase = tf.Variable("resolution")  # For determining whether alpha is 1
+        self.drange = drange
 
     def compile(self, d_optimizer, g_optimizer, g_loss_fn, d_loss_fn):
         super(ProgressiveGANTrainer, self).compile()
@@ -64,7 +65,7 @@ class ProgressiveGANTrainer(tf.keras.Model):
         batch_size = tf.shape(reals)[0]
 
         # normalize the real images using minmax to [-1, 1]
-        reals = _adjust_dynamic_range(reals, [0.0, 255.0], [-1.0, 1.0])
+        reals = _adjust_dynamic_range(reals, self.drange, [-1.0, 1.0])
 
         # calculate alpha differently for transition and resolution phase
         self.train_step_counter.assign_add(1.0)

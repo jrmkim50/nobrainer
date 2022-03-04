@@ -16,6 +16,7 @@ def progressivegan(
     d_fmap_base=8192,
     g_fmap_max=256,
     d_fmap_max=256,
+    drange=[0, 255]
 ):
     """Instantiate ProgressiveGAN Architecture.
 
@@ -43,6 +44,7 @@ def progressivegan(
         dimensionality=dimensionality,
         fmap_base=g_fmap_base,
         fmap_max=g_fmap_max,
+        drange=drange,
     )
 
     discriminator = Discriminator(
@@ -51,6 +53,7 @@ def progressivegan(
         dimensionality=dimensionality,
         fmap_base=d_fmap_base,
         fmap_max=d_fmap_max,
+        drange=drange,
     )
 
     return generator, discriminator
@@ -65,6 +68,7 @@ class Generator(tf.keras.Model):
         fmap_base=8192,
         fmap_max=256,
         dimensionality=3,
+        drange=[0, 255]
     ):
         super(Generator, self).__init__()
 
@@ -97,6 +101,7 @@ class Generator(tf.keras.Model):
         self.HeadConv2 = self.Conv(filters=self.num_channels, kernel_size=1)
 
         self.build([(None, latent_size), (1,)])
+        self.drange = drange
 
     def _pixel_norm(self, epsilon=1e-8):
         """
@@ -199,7 +204,7 @@ class Generator(tf.keras.Model):
     def generate(self, latents):
         alpha = tf.constant([1.0], tf.float32)
         image = self.call([latents, alpha])
-        image = _adjust_dynamic_range(image, [-1, 1], [0, 255])
+        image = _adjust_dynamic_range(image, [-1, 1], self.drange)
         return {"generated": image}
 
     def save(self, filepath, **kwargs):
