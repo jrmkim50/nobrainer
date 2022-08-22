@@ -182,7 +182,9 @@ class Generator(tf.keras.Model):
         y = self.HeadConv2(y)
 
         output = self._weighted_sum()([x, y, alpha])
-        output = layers.Activation("tanh")(output)
+        # output = layers.Activation("tanh")(output)
+
+        print(output.shape)
 
         return output
 
