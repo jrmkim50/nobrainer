@@ -256,6 +256,14 @@ def adjust_dynamic_range(x, drange_in, drange_out):
     bias = drange_out[0] - drange_in[0] * scale
     return (x * scale) + bias
 
+def standardize_tf(x, stats):
+    x = tf.convert_to_tensor(x)
+    return (x - stats[:,0]) / stats[:,1]
+
+def destandardize_tf(x, stats):
+    x = tf.convert_to_tensor(x)
+    return (x * stats[:,1]) + stats[:,0]
+
 
 # Below this line, we implement methods similar to those above but using Numpy.
 # This is particularly useful when we use models to predict, because it is
