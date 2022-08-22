@@ -380,7 +380,6 @@ class Discriminator(tf.keras.Model):
         images_shape = (
             (None,)
             + getImageSize(2**self.current_resolution_log2, tuple([size//2 for size in self.start_size]))
-            + (self.num_channels,)
         )
         alpha_shape = (1,)
 
