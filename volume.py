@@ -252,8 +252,8 @@ def adjust_dynamic_range(x, drange_in, drange_out):
     Array of scaled and shifted values. Output values has range in drange_out.
     """
     x = tf.convert_to_tensor(x)
-    scale = (drange_out[1] - drange_out[0]) / (drange_in[1] - drange_in[0])
-    bias = drange_out[0] - drange_in[0] * scale
+    scale = (drange_out[:,1] - drange_out[:,0]) / (drange_in[:,1] - drange_in[:,0])
+    bias = drange_out[:,0] - drange_in[:,0] * scale
     return (x * scale) + bias
 
 def standardize_tf(x, stats):
