@@ -184,8 +184,6 @@ class Generator(tf.keras.Model):
         output = self._weighted_sum()([x, y, alpha])
         # output = layers.Activation("tanh")(output)
 
-        print(output.shape)
-
         return output
 
     def add_resolution(self):
