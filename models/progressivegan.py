@@ -221,7 +221,7 @@ class Generator(tf.keras.Model):
         if self.zscore:
             image = _destandardize_tf(image, self.stats)
         else:
-            image = _adjust_dynamic_range(image, [[-1,-1], [-1,-1]], self.stats)
+            image = _adjust_dynamic_range(image, [[-1, 1], [-1, 1]], self.stats)
         return {"generated": image}
 
     def save(self, filepath, **kwargs):
