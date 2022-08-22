@@ -204,4 +204,4 @@ def getImageSize(resolution, base_size = None):
         return (resolution,) * 3
     # 2**1 => [2,2,5], 2**2 => [4,4,10], 2**3 => [8,8,20]
     lod = int(np.log2(resolution)) - 1
-    return (base_size[0]*(2**lod), base_size[1]*(2**lod), base_size[2]*(2**lod))
+    return (base_size[0]*(2**lod), base_size[1]*(2**lod), base_size[2]*(2**lod), 2)
