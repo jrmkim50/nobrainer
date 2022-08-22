@@ -7,6 +7,7 @@ from tensorflow.keras import layers, models
 from ..utils import getImageSize
 
 from ..volume import destandardize_tf as _destandardize_tf
+from ..volume import adjust_dynamic_range as _adjust_dynamic_range
 
 import pdb
 
@@ -21,6 +22,7 @@ def progressivegan(
     g_fmap_max=256,
     d_fmap_max=256,
     stats=[[0,1],[0,1]],
+    zscore=False,
     base_size=None
 ):
     """Instantiate ProgressiveGAN Architecture.
@@ -51,6 +53,7 @@ def progressivegan(
         fmap_max=g_fmap_max,
         stats=stats,
         base_size=base_size,
+        zscore=zscore,
     )
 
     discriminator = Discriminator(
@@ -76,6 +79,7 @@ class Generator(tf.keras.Model):
         dimensionality=3,
         stats=[[0,1],[0,1]],
         base_size=None,
+        zscore=False,
     ):
         super(Generator, self).__init__()
 
@@ -88,6 +92,7 @@ class Generator(tf.keras.Model):
         self.dimensionality = dimensionality
 
         self.stats = stats
+        self.zscore = zscore
         self.start_size = base_size if base_size != None else (2,2,2)
 
         self.Conv = getattr(layers, "Conv{}D".format(self.dimensionality))
@@ -213,7 +218,10 @@ class Generator(tf.keras.Model):
     def generate(self, latents):
         alpha = tf.constant([1.0], tf.float32)
         image = self.call([latents, alpha])
-        image = _destandardize_tf(image, self.stats)
+        if self.zscore:
+            image = _destandardize_tf(image, self.stats)
+        else:
+            image = _adjust_dynamic_range(image, [[-1,-1], [-1,-1]], self.stats)
         return {"generated": image}
 
     def save(self, filepath, **kwargs):

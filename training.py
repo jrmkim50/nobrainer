@@ -7,6 +7,7 @@ from tensorflow.python.keras.engine import compile_utils
 
 from .losses import gradient_penalty
 from .volume import standardize_tf as _standardize_tf
+from .volume import adjust_dynamic_range as _adjust_dynamic_range
 
 
 class ProgressiveGANTrainer(tf.keras.Model):
@@ -33,7 +34,7 @@ class ProgressiveGANTrainer(tf.keras.Model):
     [https://research.nvidia.com/sites/default/files/pubs/2017-10_Progressive-Growing-of/karras2018iclr-paper.pdf](https://research.nvidia.com/sites/default/files/pubs/2017-10_Progressive-Growing-of/karras2018iclr-paper.pdf)
     """
 
-    def __init__(self, discriminator, generator, gradient_penalty=False, stats=[[0,1],[0,1]]):
+    def __init__(self, discriminator, generator, gradient_penalty=False, stats=[[0,1],[0,1]], zscore=False):
         super(ProgressiveGANTrainer, self).__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -45,6 +46,7 @@ class ProgressiveGANTrainer(tf.keras.Model):
         )  # For calculating alpha in transition phase
         self.phase = tf.Variable("resolution")  # For determining whether alpha is 1
         self.stats = stats
+        self.zscore = zscore
 
     def compile(self, d_optimizer, g_optimizer, g_loss_fn, d_loss_fn):
         super(ProgressiveGANTrainer, self).compile()
@@ -65,7 +67,10 @@ class ProgressiveGANTrainer(tf.keras.Model):
         batch_size = tf.shape(reals)[0]
 
         # normalize the real images using minmax to [-1, 1]
-        reals = _standardize_tf(reals, self.stats)
+        if self.zscore:
+            reals = _standardize_tf(reals, self.stats)
+        else:
+            reals = _adjust_dynamic_range(reals, self.stats, [[-1,1],[-1,1]])
 
         # calculate alpha differently for transition and resolution phase
         self.train_step_counter.assign_add(1.0)
