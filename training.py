@@ -4,6 +4,7 @@ import os
 
 import tensorflow as tf
 from tensorflow.python.keras.engine import compile_utils
+import numpy as np
 
 from .losses import gradient_penalty
 from .volume import standardize_tf as _standardize_tf
@@ -34,7 +35,7 @@ class ProgressiveGANTrainer(tf.keras.Model):
     [https://research.nvidia.com/sites/default/files/pubs/2017-10_Progressive-Growing-of/karras2018iclr-paper.pdf](https://research.nvidia.com/sites/default/files/pubs/2017-10_Progressive-Growing-of/karras2018iclr-paper.pdf)
     """
 
-    def __init__(self, discriminator, generator, gradient_penalty=False, stats=[[0,1],[0,1]], zscore=False):
+    def __init__(self, discriminator, generator, gradient_penalty=False, stats=[0,1], zscore=False):
         super(ProgressiveGANTrainer, self).__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -45,6 +46,9 @@ class ProgressiveGANTrainer(tf.keras.Model):
             0.0
         )  # For calculating alpha in transition phase
         self.phase = tf.Variable("resolution")  # For determining whether alpha is 1
+        # If not using zscore: stats only contains the min and max or mean and std for the CT images
+        # as a result: z-score stats is an array with 2 subarrays. non-z-score stats is 
+        # just an array with 2 elements
         self.stats = stats
         self.zscore = zscore
 
@@ -66,11 +70,35 @@ class ProgressiveGANTrainer(tf.keras.Model):
         # get batch size dynamically
         batch_size = tf.shape(reals)[0]
 
-        # normalize the real images using minmax to [-1, 1]
+        # convert to numpy to extract stats about reals
+        reals = reals.numpy()        
+
+        # shape of stats: (batch_size, 2)
+        dummy_min_max = np.array([
+            [0 for _ in range(len(reals))], 
+            [1 for _ in range(len(reals))]
+        ]).transpose()
+        pet_min_max = np.array([
+            [reals[i,1].min() for i in range(len(reals))], 
+            [reals[i,1].max() for i in range(len(reals))]
+        ]).transpose()
+        pet_target_min_max = np.array([
+            [0 for _ in range(len(reals))], 
+            [1 for _ in range(len(reals))]
+        ]).transpose()
+
         if self.zscore:
+            # normalize the pet images each image's minmax to [0, 1]
+            # ct images will not be normalized
+            reals = _adjust_dynamic_range(reals, [dummy_min_max, pet_min_max], [dummy_min_max, pet_target_min_max])
+            # precompute mean and stddev of ct images. precompute mean and stddev of normalized pet images
+            # store those values in self.stats
             reals = _standardize_tf(reals, self.stats)
         else:
-            reals = _adjust_dynamic_range(reals, self.stats, [[-1,1],[-1,1]])
+            # normalize the pet images using minmax to [0, 1]
+            reals = _adjust_dynamic_range(reals, [dummy_min_max, pet_min_max], [dummy_min_max, pet_target_min_max])
+            # normalize ct images with average min/max of dataset
+            reals = _adjust_dynamic_range(reals, [self.stats, [0,1]], [[0,1],[0,1]])
 
         # calculate alpha differently for transition and resolution phase
         self.train_step_counter.assign_add(1.0)

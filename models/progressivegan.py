@@ -219,9 +219,11 @@ class Generator(tf.keras.Model):
         alpha = tf.constant([1.0], tf.float32)
         image = self.call([latents, alpha])
         if self.zscore:
+            # self.stats is the average mean/std for ct and pet across the training set
             image = _destandardize_tf(image, self.stats)
         else:
-            image = _adjust_dynamic_range(image, [[-1, 1], [-1, 1]], self.stats)
+            # self.stats is just the average min/max for ct images across the training set
+            image = _adjust_dynamic_range(image, [[0,1], [0,1]], [self.stats, [0,1]])
         return {"generated": image}
 
     def save(self, filepath, **kwargs):

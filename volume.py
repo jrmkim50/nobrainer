@@ -260,6 +260,7 @@ def adjust_dynamic_range(x, drange_in, drange_out):
 
 def standardize_tf(x, stats):
     x = tf.convert_to_tensor(x)
+    # (x - mean) / std
     return (x - stats[:,0]) / stats[:,1]
 
 def destandardize_tf(x, stats):
