@@ -77,8 +77,8 @@ class ProgressiveGANTrainer(tf.keras.Model):
             [1 for _ in range(batch_size)]
         ]).transpose()[None][None][None].transpose((3,4,0,1,2))
         pet_min_max = np.array([
-            [tf.math.reduce_min(reals[i,:,:,:,1]) for i in range(batch_size)], 
-            [tf.math.reduce_max(reals[i,:,:,:,1]) for i in range(batch_size)]
+            [int(tf.math.reduce_min(reals[i,:,:,:,1])) for i in range(batch_size)], 
+            [int(tf.math.reduce_max(reals[i,:,:,:,1])) for i in range(batch_size)]
         ]).transpose()[None][None][None].transpose((3,4,0,1,2))
         pet_target_min_max = np.array([
             [0 for _ in range(batch_size)], 
