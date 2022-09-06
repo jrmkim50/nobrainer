@@ -73,30 +73,34 @@ class ProgressiveGANTrainer(tf.keras.Model):
         # convert to numpy to extract stats about reals
         reals = reals.numpy()        
 
-        # shape of stats: (batch_size, 2)
+        # shape of stats: (batch_size, 2, -1, -1, -1) => for each sample, you get an associated min/max
         dummy_min_max = np.array([
             [0 for _ in range(len(reals))], 
             [1 for _ in range(len(reals))]
-        ]).transpose()
+        ]).transpose()[None][None][None].transpose((3,4,0,1,2))
         pet_min_max = np.array([
-            [reals[i,1].min() for i in range(len(reals))], 
-            [reals[i,1].max() for i in range(len(reals))]
-        ]).transpose()
+            [reals[i,:,:,:,1].min() for i in range(len(reals))], 
+            [reals[i,:,:,:,1].max() for i in range(len(reals))]
+        ]).transpose()[None][None][None].transpose((3,4,0,1,2))
         pet_target_min_max = np.array([
             [0 for _ in range(len(reals))], 
             [1 for _ in range(len(reals))]
-        ]).transpose()
+        ]).transpose()[None][None][None].transpose((3,4,0,1,2))
+
+        # min/max will appear in the second dimension after transpose
+        # place min/max in second dimension, so when you do drange[:,1] or drange[:,0]
+        # you can get an array that contains the corresponding stats for each channel 
+        stats_in = np.array([dummy_min_max, pet_min_max]).transpose((1,2,3,4,5,0))
+        stats_out = np.array([dummy_min_max, pet_target_min_max]).transpose((1,2,3,4,5,0))
+        # normalize the pet images each image's minmax to [0, 1]
+        # ct images will not be normalized
+        reals = _adjust_dynamic_range(reals, stats_in, stats_out)
 
         if self.zscore:
-            # normalize the pet images each image's minmax to [0, 1]
-            # ct images will not be normalized
-            reals = _adjust_dynamic_range(reals, [dummy_min_max, pet_min_max], [dummy_min_max, pet_target_min_max])
             # precompute mean and stddev of ct images. precompute mean and stddev of normalized pet images
             # store those values in self.stats
             reals = _standardize_tf(reals, self.stats)
         else:
-            # normalize the pet images using minmax to [0, 1]
-            reals = _adjust_dynamic_range(reals, [dummy_min_max, pet_min_max], [dummy_min_max, pet_target_min_max])
             # normalize ct images with average min/max of dataset
             reals = _adjust_dynamic_range(reals, [self.stats, [0,1]], [[0,1],[0,1]])
 
