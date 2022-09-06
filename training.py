@@ -53,7 +53,7 @@ class ProgressiveGANTrainer(tf.keras.Model):
         self.zscore = zscore
 
     def compile(self, d_optimizer, g_optimizer, g_loss_fn, d_loss_fn):
-        super(ProgressiveGANTrainer, self).compile(run_eagerly=True)
+        super(ProgressiveGANTrainer, self).compile()
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
 
@@ -77,8 +77,8 @@ class ProgressiveGANTrainer(tf.keras.Model):
             [1 for _ in range(batch_size)]
         ]).transpose()[None][None][None].transpose((3,4,0,1,2))
         pet_min_max = np.array([
-            [int(tf.math.reduce_min(reals[i,:,:,:,1])) for i in range(batch_size)], 
-            [int(tf.math.reduce_max(reals[i,:,:,:,1])) for i in range(batch_size)]
+            [tf.keras.backend.get_value(tf.math.reduce_min(reals[i,:,:,:,1])) for i in range(batch_size)], 
+            [tf.keras.backend.get_value(tf.math.reduce_max(reals[i,:,:,:,1])) for i in range(batch_size)]
         ]).transpose()[None][None][None].transpose((3,4,0,1,2))
         pet_target_min_max = np.array([
             [0 for _ in range(batch_size)], 
