@@ -70,29 +70,17 @@ class ProgressiveGANTrainer(tf.keras.Model):
         # get batch size dynamically
         # batch_size = tf.shape(reals)[0] 
         batch_size = reals.shape[0]
-
-        # shape of stats: (batch_size, 2, -1, -1, -1) => for each sample, you get an associated min/max
-        dummy_min_max = np.array([
-            [0 for _ in range(batch_size)], 
-            [1 for _ in range(batch_size)]
-        ]).transpose()[None][None][None].transpose((3,4,0,1,2))
-        pet_min_max = np.array([
-            [tf.keras.backend.get_value(tf.math.reduce_min(reals[i,:,:,:,1])) for i in range(batch_size)], 
-            [tf.keras.backend.get_value(tf.math.reduce_max(reals[i,:,:,:,1])) for i in range(batch_size)]
-        ]).transpose()[None][None][None].transpose((3,4,0,1,2))
-        pet_target_min_max = np.array([
-            [0 for _ in range(batch_size)], 
-            [1 for _ in range(batch_size)]
-        ]).transpose()[None][None][None].transpose((3,4,0,1,2))
-
-        # min/max will appear in the second dimension after transpose
-        # place min/max in second dimension, so when you do drange[:,1] or drange[:,0]
-        # you can get an array that contains the corresponding stats for each channel 
-        stats_in = np.array([dummy_min_max, pet_min_max]).transpose((1,2,3,4,5,0))
-        stats_out = np.array([dummy_min_max, pet_target_min_max]).transpose((1,2,3,4,5,0))
-        # normalize the pet images each image's minmax to [0, 1]
-        # ct images will not be normalized
-        reals = _adjust_dynamic_range(reals, stats_in, stats_out)
+        # normalize the pet image to [0,1] with each image's minmax
+        reals = tf.transpose(tf.stack(
+            [
+                reals[:,:,:,:,0], 
+                (
+                    (reals[:,:,:,:,1] - tf.math.reduce_min(reals[:,:,:,:,1])) /\
+                    (tf.math.reduce_max(reals[:,:,:,:,1]) - tf.math.reduce_min(reals[:,:,:,:,1]))
+                )
+            ]
+        ), perm=[1,2,3,4,0])
+        
 
         if self.zscore:
             # precompute mean and stddev of ct images. precompute mean and stddev of normalized pet images
