@@ -68,7 +68,8 @@ class ProgressiveGANTrainer(tf.keras.Model):
             reals = reals[0]
 
         # get batch size dynamically
-        batch_size = tf.shape(reals)[0] 
+        # batch_size = tf.shape(reals)[0] 
+        batch_size = reals.shape[0]
 
         # shape of stats: (batch_size, 2, -1, -1, -1) => for each sample, you get an associated min/max
         dummy_min_max = np.array([
