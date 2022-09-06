@@ -53,7 +53,7 @@ class ProgressiveGANTrainer(tf.keras.Model):
         self.zscore = zscore
 
     def compile(self, d_optimizer, g_optimizer, g_loss_fn, d_loss_fn):
-        super(ProgressiveGANTrainer, self).compile()
+        super(ProgressiveGANTrainer, self).compile(run_eagerly=True)
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
 
