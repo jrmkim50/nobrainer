@@ -254,8 +254,8 @@ def adjust_dynamic_range(x, drange_in, drange_out):
     x = tf.convert_to_tensor(x)
     drange_in = np.array(drange_in)
     drange_out = np.array(drange_out)
-    scale = (drange_out[...,1] - drange_out[...,0]) / (drange_in[...,1] - drange_in[...,0])
-    bias = drange_out[...,0] - drange_in[...,0] * scale
+    scale = (drange_out[:,1] - drange_out[:,0]) / (drange_in[:,1] - drange_in[:,0])
+    bias = drange_out[:,0] - drange_in[:,0] * scale
     return (x * scale) + bias
 
 def standardize_tf(x, stats):
