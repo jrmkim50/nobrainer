@@ -72,16 +72,16 @@ class ProgressiveGANTrainer(tf.keras.Model):
 
         # shape of stats: (batch_size, 2, -1, -1, -1) => for each sample, you get an associated min/max
         dummy_min_max = np.array([
-            [0 for _ in range(len(reals))], 
-            [1 for _ in range(len(reals))]
+            [0 for _ in range(batch_size)], 
+            [1 for _ in range(batch_size)]
         ]).transpose()[None][None][None].transpose((3,4,0,1,2))
         pet_min_max = np.array([
-            [tf.math.reduce_min(reals[i,:,:,:,1]) for i in range(len(reals))], 
-            [tf.math.reduce_max(reals[i,:,:,:,1]) for i in range(len(reals))]
+            [tf.math.reduce_min(reals[i,:,:,:,1]) for i in range(batch_size)], 
+            [tf.math.reduce_max(reals[i,:,:,:,1]) for i in range(batch_size)]
         ]).transpose()[None][None][None].transpose((3,4,0,1,2))
         pet_target_min_max = np.array([
-            [0 for _ in range(len(reals))], 
-            [1 for _ in range(len(reals))]
+            [0 for _ in range(batch_size)], 
+            [1 for _ in range(batch_size)]
         ]).transpose()[None][None][None].transpose((3,4,0,1,2))
 
         # min/max will appear in the second dimension after transpose
