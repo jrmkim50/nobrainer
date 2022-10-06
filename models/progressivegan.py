@@ -223,7 +223,7 @@ class Generator(tf.keras.Model):
             image = _destandardize_tf(image, self.stats)
         else:
             # self.stats is just the average min/max for ct images across the training set
-            image = _adjust_dynamic_range(image, [[0,1], [0,1]], [self.stats, [0,1]])
+            image = _adjust_dynamic_range(image, [[0,1]], [self.stats])
         return {"generated": image}
 
     def save(self, filepath, **kwargs):

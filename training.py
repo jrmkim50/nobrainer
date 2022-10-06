@@ -88,7 +88,7 @@ class ProgressiveGANTrainer(tf.keras.Model):
             reals = _standardize_tf(reals, self.stats)
         else:
             # normalize ct images with average min/max of dataset
-            reals = _adjust_dynamic_range(reals, [self.stats, [0,1]], [[0,1],[0,1]])
+            reals = _adjust_dynamic_range(reals, [self.stats], [[0,1]])
 
         # calculate alpha differently for transition and resolution phase
         self.train_step_counter.assign_add(1.0)
