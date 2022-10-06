@@ -70,16 +70,6 @@ class ProgressiveGANTrainer(tf.keras.Model):
         # get batch size dynamically
         # batch_size = tf.shape(reals)[0] 
         batch_size = reals.shape[0]
-        # normalize the pet image to [0,1] with each image's minmax
-        reals = tf.transpose(tf.stack(
-            [
-                reals[:,:,:,:,0], 
-                (
-                    (reals[:,:,:,:,1] - tf.math.reduce_min(reals[:,:,:,:,1])) /\
-                    (tf.math.reduce_max(reals[:,:,:,:,1]) - tf.math.reduce_min(reals[:,:,:,:,1]))
-                )
-            ]
-        ), perm=[1,2,3,4,0])
         
 
         if self.zscore:
