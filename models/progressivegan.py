@@ -382,15 +382,15 @@ class Discriminator(tf.keras.Model):
             filters=self._nf(self.current_resolution_log2), kernel_size=1, padding="same"
         )
 
-        # images_shape = (
-        #     (None,)
-        #     + (int(2.0**self.current_resolution_log2),) * self.dimensionality
-        #     + (self.num_channels,)
-        # )
         images_shape = (
             (None,)
             + getImageSize(2**self.current_resolution_log2, tuple([size//2 for size in self.start_size]))
+            + (self.num_channels,)
         )
+        # images_shape = (
+        #     (None,)
+        #     + getImageSize(2**self.current_resolution_log2, tuple([size//2 for size in self.start_size]))
+        # )
         alpha_shape = (1,)
 
         self.build([images_shape, alpha_shape])
