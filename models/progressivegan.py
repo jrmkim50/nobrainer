@@ -21,8 +21,7 @@ def progressivegan(
     d_fmap_base=8192,
     g_fmap_max=256,
     d_fmap_max=256,
-    stats=[[0,1],[0,1]],
-    zscore=False,
+    stats=[0,1],
     base_size=None
 ):
     """Instantiate ProgressiveGAN Architecture.
@@ -53,7 +52,6 @@ def progressivegan(
         fmap_max=g_fmap_max,
         stats=stats,
         base_size=base_size,
-        zscore=zscore,
     )
 
     discriminator = Discriminator(
@@ -77,9 +75,8 @@ class Generator(tf.keras.Model):
         fmap_base=8192,
         fmap_max=256,
         dimensionality=3,
-        stats=[[0,1],[0,1]],
+        stats=[0,1],
         base_size=None,
-        zscore=False,
     ):
         super(Generator, self).__init__()
 
@@ -92,7 +89,6 @@ class Generator(tf.keras.Model):
         self.dimensionality = dimensionality
 
         self.stats = stats
-        self.zscore = zscore
         self.start_size = base_size if base_size != None else (2,2,2)
 
         self.Conv = getattr(layers, "Conv{}D".format(self.dimensionality))
@@ -218,12 +214,8 @@ class Generator(tf.keras.Model):
     def generate(self, latents):
         alpha = tf.constant([1.0], tf.float32)
         image = self.call([latents, alpha])
-        if self.zscore:
-            # self.stats is the average mean/std for ct and pet across the training set
-            image = _destandardize_tf(image, self.stats)
-        else:
-            # self.stats is just the average min/max for ct images across the training set
-            image = _adjust_dynamic_range(image, [[-1,1]], [self.stats])
+        # self.stats is just the average min/max for ct images across the training set
+        image = _adjust_dynamic_range(image, [-1,1], self.stats)
         return {"generated": image}
 
     def save(self, filepath, **kwargs):

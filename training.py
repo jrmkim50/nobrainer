@@ -35,7 +35,7 @@ class ProgressiveGANTrainer(tf.keras.Model):
     [https://research.nvidia.com/sites/default/files/pubs/2017-10_Progressive-Growing-of/karras2018iclr-paper.pdf](https://research.nvidia.com/sites/default/files/pubs/2017-10_Progressive-Growing-of/karras2018iclr-paper.pdf)
     """
 
-    def __init__(self, discriminator, generator, gradient_penalty=False, stats=[0,1], zscore=False):
+    def __init__(self, discriminator, generator, gradient_penalty=False, stats=[0,1]):
         super(ProgressiveGANTrainer, self).__init__()
         self.discriminator = discriminator
         self.generator = generator
@@ -50,7 +50,6 @@ class ProgressiveGANTrainer(tf.keras.Model):
         # as a result: z-score stats is an array with 2 subarrays. non-z-score stats is 
         # just an array with 2 elements
         self.stats = stats
-        self.zscore = zscore
 
     def compile(self, d_optimizer, g_optimizer, g_loss_fn, d_loss_fn):
         super(ProgressiveGANTrainer, self).compile()
@@ -71,14 +70,7 @@ class ProgressiveGANTrainer(tf.keras.Model):
         # batch_size = tf.shape(reals)[0] 
         batch_size = reals.shape[0]
         
-
-        if self.zscore:
-            # precompute mean and stddev of ct images. precompute mean and stddev of normalized pet images
-            # store those values in self.stats
-            reals = _standardize_tf(reals, self.stats)
-        else:
-            # normalize ct images with average min/max of dataset
-            reals = _adjust_dynamic_range(reals, [self.stats], [[-1,1]])
+        reals = _adjust_dynamic_range(reals, self.stats, [-1,1])
 
         # calculate alpha differently for transition and resolution phase
         self.train_step_counter.assign_add(1.0)
